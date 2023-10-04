@@ -47,36 +47,29 @@ const dateToYMD = date => {
   const y = date.getFullYear();
   return `${y}-${mm}-${dd}`;
 };
-const run = async () => {
+const run = async (bookings, hour) => {
   const today = dateToYMD(new Date()); // today yyyy-mm-dd
-  const fortnightAhead = new Date();
-  fortnightAhead.setDate(fortnightAhead.getDate() + 15); // Add 15 days because API returns dates before "end"
-  const fortnight = dateToYMD(fortnightAhead);
-  const params = new URLSearchParams();
-  params.set('start', today);
-  params.set('end', fortnight);
-  const bookings = await scan(params.toString());
   const availableBookings = [];
 
   for (let court = 1; court <= 12; court++) {
     // 14th day was too noisy
     for (let i = 0; i < 14; i++) {
-      if (i === 0 && new Date().getHours() >= 17) {
-        // Skip today if after 5pm
+      if (i === 0 && new Date().getHours() >= hour) {
+        // Skip today if after hour
         continue;
       }
       if (i === 14 && new Date().getHours() < 17) {
         // Skip the 14 days ahead date if it is before 5pm today (unbookable)
         continue;
       }
-      const targetStartDate = new Date(`${today}T17:00`);
+      const targetStartDate = new Date(`${today}T${hour}:00`);
       targetStartDate.setDate(targetStartDate.getDate() + i);
       if ([5, 6, 0].includes(targetStartDate.getDay())) {
         // Skip Friday, Saturday, Sunday
         continue;
       }
       const targetEndDate = new Date(targetStartDate);
-      targetEndDate.setHours(19);
+      targetEndDate.setHours(hour + 1);
 
       const filteredBookings = bookings.filter(
         b =>
@@ -119,7 +112,24 @@ const run = async () => {
     }
   }
 
-  return availableBookings
+  return availableBookings;
+};
+
+app.get('/', async (_, res) => {
+  const today = dateToYMD(new Date()); // today yyyy-mm-dd
+  const fortnightAhead = new Date();
+  fortnightAhead.setDate(fortnightAhead.getDate() + 15); // Add 15 days because API returns dates before "end"
+  const fortnight = dateToYMD(fortnightAhead);
+  const params = new URLSearchParams();
+  params.set('start', today);
+  params.set('end', fortnight);
+  const bookings = await scan(params.toString());
+
+  const fiveToSixBookings = await run(bookings, 17);
+  const sixToSevenBookings = await run(bookings, 18);
+
+  fiveToSixBookings
+    .concat(sixToSevenBookings)
     .sort((a, b) => {
       if (a.date < b.date) {
         return -1;
@@ -130,10 +140,7 @@ const run = async () => {
       }
     })
     .map(ab => ({ court: ab.court, date: ab.dateString }));
-};
-
-app.get('/', async (_, res) => {
-  res.send(await run());
+  res.send();
 });
 
 app.listen(8388, () => {
