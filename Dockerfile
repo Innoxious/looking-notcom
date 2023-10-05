@@ -1,4 +1,4 @@
-FROM node:alpine as base
+FROM node:current-alpine3.17 as base
 
 WORKDIR /app
 
@@ -8,4 +8,4 @@ RUN rm -rf node_modules && npm ci
 
 COPY . .
 
-CMD ["node", "--env-file=.env" "./api.js"]
+CMD node --env-file=.env ./api.js
