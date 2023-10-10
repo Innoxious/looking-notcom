@@ -149,7 +149,18 @@ app.get('/', async (_, res) => {
       }
     })
     .map(ab => ({ court: ab.court, date: ab.readableString }));
-  res.send(allAvailableBookings);
+
+  const groupedAvailableBookings = allAvailableBookings.reduce(
+    (map, element) =>
+      map.set(element.date, [...(map.get(element.date) || []), element.court]),
+    new Map(),
+  );
+  res.send(
+    [...groupedAvailableBookings].map(group => ({
+      date: group[0],
+      courts: group[1],
+    })),
+  );
 });
 
 app.listen(8388, () => {
