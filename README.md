@@ -1,3 +1,4 @@
 # looking-notcom
 
-![image](https://github.com/Innoxious/looking-notcom/assets/5837038/4169ae46-ef1b-4ed4-ab3b-99f774b665f6)
+![image](https://github.com/Innoxious/looking-notcom/assets/5837038/174cb8c1-a88b-4195-bc51-1bd39ce0ec84)
+
